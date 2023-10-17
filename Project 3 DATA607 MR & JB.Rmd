@@ -1,0 +1,51 @@
+---
+title: "Overview of Project 3"
+author: "Michael Robinson & Jonathan Burns"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+Packages needed:
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+
+### Collaboration Tools:
+
+Communication tools:
+
+-   Slack channel specifically for project 3
+
+    -   Within the slack channel Michael and I have talked about initial ideas, methods and meeting times for the project.
+
+-   Zoom
+
+    -   In addition to slack, we have met over zoom to discuss where we wanted to head with the project, also our immediate plans for getting the project moving.
+
+    -   Zoom and slack will likely be our main sources of communication moving forward as we start the data collection and coding.
+
+Code sharing:
+
+-   GitHub
+
+    -   For this project we intend to use a GitHub repository and add one of us as a collaborator to a personal repo.
+
+    -   This will allow for the seamless transfer of data sources, code and any other things that come up during the process.
+
+-   Slack
+
+    -   Slack will again be utilized for sharing links to methods, data sources and helpful videos.
+
+        -   Methodology pages have already been shared in our slack channel for this.
+
+Project Documentation:
+
+-   RMD documentation
+
+### Data Sources:
+
+### Logical Model:
+
+### Entity-Relationship (ER) Diagram:
