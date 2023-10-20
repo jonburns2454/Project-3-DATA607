@@ -58,6 +58,9 @@ Google Docs where our raw csv data originated:
 
 "https://docs.google.com/spreadsheets/d/1lac1H2IgCDCs9LLTQL6yb6MUPN1u4C5fJv_6YjipIaM/edit#gid=1072460513"
 
+Zip Recruter - Data Scientist Must-Have Resume Skills and Keywords
+https://www.ziprecruiter.com/career/Data-Scientist/Resume-Keywords-and-Skills
+
 ```{r}
 skills <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/ds_general_skills_revised.csv")
 
