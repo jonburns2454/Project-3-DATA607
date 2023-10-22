@@ -1,6 +1,6 @@
 ---
 title: "Overview of Project 3"
-author: "Michael Robinson & Jonathan Burns"
+author: "Michael Robinson & Jonathan Burns & Frederick Jones"
 date: "`r Sys.Date()`"
 output: openintro::lab_report
 ---
@@ -52,11 +52,9 @@ Project Documentation:
 
 ### Data Sources:
 
-Kaggle Link <- https://www.kaggle.com/datasets/discdiver/data-scientist-general-skills-2018-revised
-
-Google Docs where our raw csv data originated:
-
-"https://docs.google.com/spreadsheets/d/1lac1H2IgCDCs9LLTQL6yb6MUPN1u4C5fJv_6YjipIaM/edit#gid=1072460513"
+Kaggle Link 1 <- https://www.kaggle.com/datasets/discdiver/data-scientist-general-skills-2018-revised
+Kaggle Link 2 <- https://www.kaggle.com/datasets/arnabchaki/data-science-salaries-2023/
+Google Docs where our raw csv data originated: "https://docs.google.com/spreadsheets/d/1lac1H2IgCDCs9LLTQL6yb6MUPN1u4C5fJv_6YjipIaM/edit#gid=1072460513"
 
 Zip Recruter - Data Scientist Must-Have Resume Skills and Keywords
 https://www.ziprecruiter.com/career/Data-Scientist/Resume-Keywords-and-Skills
@@ -65,11 +63,16 @@ https://www.ziprecruiter.com/career/Data-Scientist/Resume-Keywords-and-Skills
 skills <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/ds_general_skills_revised.csv")
 
 software <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/Data%20Science%20Career%20Terms%20-%20ds%20software.csv")
+
+glimpse(skills)
+glimpse(software)
+
 ```
-
-
-
-### Logical Model:
+### Plan:
+The plan for this project is to utilize a few different data sources to get the best analysis on data science skills. The first kaggle link is to a data set that 
+features overall data science skills from 2018 which has both the skills and software scraped from Monster, Indeed, SimplyHired, and Linkedin. This first data set
+from JEFF HALE will allow for some solid EDA focusing in specifically on data science skills.  The second Kaggle link looks at data science salaries and will provide us with a more up-to-date 
+view into the industry. This specific data set combines experience levels, and job title data which will be helpful in futher insights and analysis into how skills and seniority translate to salary level.
 
 
 ### Entity-Relationship (ER) Diagram:
