@@ -16,6 +16,7 @@ library(tidyverse)
 library(stringr)
 library(dplyr)
 library(ggplot2)
+library(knitr)
 ```
 
 ### Collaboration Tools:
@@ -72,7 +73,9 @@ glimpse(software)
 The plan for this project is to utilize a few different data sources to get the best analysis on data science skills. The first kaggle link is to a data set that 
 features overall data science skills from 2018 which has both the skills and software scraped from Monster, Indeed, SimplyHired, and Linkedin. This first data set
 from JEFF HALE will allow for some solid EDA focusing in specifically on data science skills.  The second Kaggle link looks at data science salaries and will provide us with a more up-to-date 
-view into the industry. This specific data set combines experience levels, and job title data which will be helpful in futher insights and analysis into how skills and seniority translate to salary level.
+view into the industry. This specific data set combines experience levels, and job title data which will be helpful in further insights and analysis into how skills and seniority translate to salary level.
 
 
 ### Entity-Relationship (ER) Diagram:
+![Entity-Relationship(ER)](C:\Users\jashb\Downloads\QuickDBD-export.png)
+
