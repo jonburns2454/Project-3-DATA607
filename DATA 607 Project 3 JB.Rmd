@@ -1,0 +1,163 @@
+---
+title: "Project 3 JB Section"
+author: "Jonathan Burns"
+date: "2023-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Packages needed:
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(reshape2)
+```
+
+
+```{r}
+skills <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/ds_general_skills_revised.csv")
+
+software <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/Data%20Science%20Career%20Terms%20-%20ds%20software.csv")
+
+glimpse(skills)
+glimpse(software)
+
+```
+Preliminary Work:
+
+    - Checking for missing data
+    - Cleaning
+
+```{r}
+sum(is.na(skills))## 0
+
+sum(is.na(software))## 0 
+
+software.cleaned <- software[, -c(6:12)] # Removing the nonessential data columns
+
+software.cleaned <- software.cleaned[-c(38:42), ]
+
+skills.cleaned <- skills[-c(16:30), ] # Removing data that interferes with the format
+    
+```
+
+Some regex to separeate the characters into numeric data and add it into a new data frame
+```{r}
+LinkedIn <- as.numeric(gsub("[%\\,]", "", skills.cleaned$LinkedIn))
+Indeed <- as.numeric(gsub("[%\\,]", "", skills.cleaned$Indeed))
+SimplyHired <- as.numeric(gsub("[%\\,]", "", skills.cleaned$SimplyHired))
+Monster <- as.numeric(gsub("[%\\,]", "", skills.cleaned$Monster))
+Keyword <- (gsub("[%\\,]", "", skills.cleaned$Keyword))
+
+skillsDF <- data.frame(Keyword, LinkedIn, Indeed, SimplyHired, Monster)
+
+
+```
+
+Doing the same for our software data: (.S denotes software data)
+```{r}
+LinkedIn.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$LinkedIn))
+Indeed.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$Indeed))
+SimplyHired.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$SimplyHired))
+Monster.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$Monster))
+Keyword.S <- (gsub("[%\\,]", "", software.cleaned$Keyword))
+
+softwareDF <- data.frame(Keyword.S, LinkedIn.S, Indeed.S, SimplyHired.S, Monster.S)
+
+
+```
+
+Adding in percentage variables to better envision the data breakdown.
+Software:
+```{r}
+softwareDF <- softwareDF %>% 
+    mutate(LinkedInFreq = (LinkedIn.S / sum(LinkedIn.S))*100) %>% 
+    mutate(IndeedFreq = (Indeed.S / sum(Indeed.S))*100) %>% 
+    mutate(SimplyHiredFreq = (SimplyHired.S / sum(SimplyHired.S))*100) %>% 
+    mutate(MonsterFreq = (Monster.S / sum(Monster.S))*100)
+
+
+```
+
+
+##Skills:
+
+```{r}
+skillsDF <- skillsDF %>% 
+    mutate(LinkedInFreq = (LinkedIn / sum(LinkedIn))*100) %>% 
+    mutate(IndeedFreq = (Indeed / sum(Indeed))*100) %>% 
+    mutate(SimplyHiredFreq = (SimplyHired / sum(SimplyHired))*100) %>% 
+    mutate(MonsterFreq = (Monster / sum(Monster))*100)
+
+
+
+```
+
+**Transforming the data further for visualization**
+```{r}
+meltedSkills <- melt(skillsDF, id.vars = "Keyword")
+
+
+meltedSoftware <- melt(softwareDF, id.vars = "Keyword.S")
+
+
+```
+
+**Bar Chart : Count**
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedIn" | variable == "Indeed" | variable == "SimplyHired" | variable == "Monster") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn" = "coral1", "Indeed" = "firebrick4", "SimplyHired" = "aquamarine4", "Monster" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Skills)")
+```
+**Bar Chart : Percent**
+*Note: This is the same idea, but instead of filtering our count numbers*
+
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Keywords", y = "Frequency") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4"))+
+    ggtitle("Keyword Frequency on Major Job Search Platforms (Skills)")
+```
+
+##Software
+
+**Bar Chart - Software**
+
+```{r}
+meltedSoftware %>% 
+    filter(variable == "LinkedIn.S" | variable == "Indeed.S" | variable == "SimplyHired.S" | variable == "Monster.S") %>% 
+ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn.S" = "coral1", "Indeed.S" = "firebrick4", "SimplyHired.S" = "aquamarine4", "Monster.S" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Software)")
+```
+**Bar Chart - Software Frequency**
+```{r}
+meltedSoftware %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4"))+
+    ggtitle("Keyword Frequency on Major Job Search Platforms (Software)")
+```
+
