@@ -1,0 +1,304 @@
+---
+title: "Project 3 JB Section"
+author: "Jonathan Burns"
+date: "2023-10-25"
+output: html_document
+---
+
+## Question
+
+**The team aimed to answer the question "Which are the most valued data science skills?"**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Packages needed:
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(reshape2)
+library(RMySQL)
+library(wordcloud2)
+library(scales)
+library(gridExtra)
+library(plotly)
+```
+
+##Database Connection While I have the data loaded in a SQL database, we wanted to use the raw data from the GitHub to show some cleaning and tidying skills we learned during class.
+
+```{r}
+con <- dbConnect(odbc::odbc(), "jbdb", timeout = 10)
+
+```
+
+```{r}
+skills <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/ds_general_skills_revised.csv")
+
+software <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/Data%20Science%20Career%20Terms%20-%20ds%20software.csv")
+
+glimpse(skills)
+glimpse(software)
+
+```
+
+Preliminary Work:
+
+```         
+- Checking for missing data
+- Cleaning
+```
+
+```{r}
+sum(is.na(skills))## 0
+
+sum(is.na(software))## 0 
+
+software.cleaned <- software[, -c(6:12)] # Removing the nonessential data columns
+
+software.cleaned <- software.cleaned[-c(38:42), ]
+
+skills.cleaned <- skills[-c(16:30), ] # Removing data that interferes with the format
+    
+```
+
+##Further tidying:
+
+Some regex to separeate the characters into numeric data and add it into a new data frame
+
+```{r}
+LinkedIn <- as.numeric(gsub("[%\\,]", "", skills.cleaned$LinkedIn))
+Indeed <- as.numeric(gsub("[%\\,]", "", skills.cleaned$Indeed))
+SimplyHired <- as.numeric(gsub("[%\\,]", "", skills.cleaned$SimplyHired))
+Monster <- as.numeric(gsub("[%\\,]", "", skills.cleaned$Monster))
+Keyword <- (gsub("[%\\,]", "", skills.cleaned$Keyword))
+
+skillsDF <- data.frame(Keyword, LinkedIn, Indeed, SimplyHired, Monster)
+
+
+```
+
+Doing the same for our software data: (.S denotes software data)
+
+```{r}
+LinkedIn.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$LinkedIn))
+Indeed.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$Indeed))
+SimplyHired.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$SimplyHired))
+Monster.S <- as.numeric(gsub("[%\\,]", "", software.cleaned$Monster))
+Keyword.S <- (gsub("[%\\,]", "", software.cleaned$Keyword))
+
+softwareDF <- data.frame(Keyword.S, LinkedIn.S, Indeed.S, SimplyHired.S, Monster.S)
+
+
+```
+
+Adding in percentage variables to better envision the data breakdown.
+
+##Software:
+
+```{r}
+softwareDF <- softwareDF %>% 
+    mutate(LinkedInFreq = (LinkedIn.S / sum(LinkedIn.S))*100) %>% 
+    mutate(IndeedFreq = (Indeed.S / sum(Indeed.S))*100) %>% 
+    mutate(SimplyHiredFreq = (SimplyHired.S / sum(SimplyHired.S))*100) %>% 
+    mutate(MonsterFreq = (Monster.S / sum(Monster.S))*100)
+
+
+```
+
+##Skills:
+
+```{r}
+skillsDF <- skillsDF %>% 
+    mutate(LinkedInFreq = (LinkedIn / sum(LinkedIn))*100) %>% 
+    mutate(IndeedFreq = (Indeed / sum(Indeed))*100) %>% 
+    mutate(SimplyHiredFreq = (SimplyHired / sum(SimplyHired))*100) %>% 
+    mutate(MonsterFreq = (Monster / sum(Monster))*100)
+
+
+
+```
+
+**Transforming the data further for visualization**
+
+```{r}
+meltedSkills <- melt(skillsDF, id.vars = "Keyword")
+
+
+meltedSoftware <- melt(softwareDF, id.vars = "Keyword.S")
+
+
+```
+
+**Bar Chart : Count**
+
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedIn" | variable == "Indeed" | variable == "SimplyHired" | variable == "Monster") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.8) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn" = "coral1", "Indeed" = "firebrick4", "SimplyHired" = "aquamarine4", "Monster" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Skills)")+
+    coord_flip()
+```
+
+**Bar Chart : Percent** *Note: This is the same idea, but instead of filtering our count numbers*
+
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Keywords", y = "Frequency") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4"))+
+    ggtitle("Keyword Frequency on Major Job Search Platforms (Skills)")+
+    coord_flip()
+```
+
+##Software
+
+**Bar Chart - Software**
+
+```{r}
+meltedSoftware %>% 
+    filter(variable == "LinkedIn.S" | variable == "Indeed.S" | variable == "SimplyHired.S" | variable == "Monster.S") %>% 
+ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn.S" = "coral1", "Indeed.S" = "firebrick4", "SimplyHired.S" = "aquamarine4", "Monster.S" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Software)")+
+    coord_flip()
+```
+
+**Bar Chart - Software Frequency**
+
+```{r}
+plot1 <- meltedSoftware %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+    ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4")) +
+    ggtitle("Keyword Count on Major Job Search Platforms (Software)") +
+    coord_flip()
+
+# Convert ggplot objects to plotly objects
+interactive_plot1 <- ggplotly(plot1)
+
+interactive_plot1_zoom <- interactive_plot1 %>%
+  layout(xaxis = list(title = "Keywords"), yaxis = list(title = "Count"))
+
+# Make the plot zoom interactive
+interactive_plot1_zoom <- interactive_plot1_zoom %>%
+  config(scrollZoom = TRUE)
+
+interactive_plot1_zoom
+```
+
+##Word Cloud Analysis **Using Skills Data to start**
+
+Skills:
+
+```{r}
+
+top_keywords_skills <- meltedSkills %>% 
+    group_by(Keyword) %>% 
+    summarise(Frequency_LI = sum(as.numeric(value))) %>% 
+    head(15) #adjusting this so all 15 keywords are present 
+
+wordcloud2(top_keywords_skills, size = 0.7,
+           minRotation = -pi/3, maxRotation = pi/3, shuffle = T,
+           shape = 'circle', rotateRatio = 0.3)
+
+
+```
+
+Software:
+
+```{r}
+top_keywords_software <- meltedSoftware %>% 
+    group_by(Keyword.S) %>% 
+    summarise(Frequency_SF = sum(as.numeric(value))) %>% 
+    head(100) #adjusting this so all 15 keywords are present 
+
+wordcloud2(top_keywords_software, size = 0.8,
+           minRotation = -pi/4, maxRotation = pi/4, shuffle = T,
+           shape = 'circle', rotateRatio = 0.3)
+```
+
+Statistical Analysis:
+
+```{r}
+data <- read.csv("https://raw.githubusercontent.com/jonburns2454/Project-3-DATA607/main/Valued_skill_data.csv")
+
+skillsDF <- skillsDF %>%
+  mutate(Total = (LinkedInFreq + IndeedFreq + SimplyHiredFreq + MonsterFreq)/4)
+
+```
+
+# Check for normality in the distribution using the Shapiro-Wilk test
+
+```{r}
+shapiro_test <- sapply(skillsDF[, 2:5], function(x) shapiro.test(x)$p.value)
+```
+
+#  new data frame with normality results
+```{r}
+normality_table <- data.frame(
+  Platform = c("LinkedIn", "Indeed", "SimplyHired", "Monster"),
+  p_value = shapiro_test
+)
+
+plot0 <- ggplot(skillsDF, aes(Keyword, Total)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Job Postings by Keyword 2018",
+       x = "Keyword",
+       y = "Total Job Postings") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot0
+```
+
+# normality test results
+```{r}
+ggplot(normality_table, aes(Platform, p_value)) +
+  geom_bar(stat = "identity", fill = "green") +
+  labs(title = "Normality Test Results",
+       x = "Platform",
+       y = "p-value")
+```
+
+# Change variable type
+
+```{r}
+data <- data %>% mutate(Share = as.numeric(sub("%", "", Share)))
+data <- data %>% mutate(Share.1 = as.numeric(sub("%", "", Share.1)))
+
+plot1 <- ggplot(data, aes(x = reorder(Skills.Required.by.Employers, Share), y = Share)) +
+   geom_bar(stat = "identity", fill = "skyblue") +
+   labs(title = "Latest Employer Skill Required ", x = "Skill", y = "Percentage") +
+   theme(axis.text.x = element_text(angle = 45, hjust = 1) ) +
+   scale_y_continuous(labels = scales::percent_format(scale = 1))  # Apply the percentage format
+
+plot2 <- ggplot(data, aes(x = reorder(Skills.Listed.by.Employees, Share.1), y = Share.1)) +
+   geom_bar(stat = "identity", fill = "green") +
+   labs(title = "Employee Skill Listed ", x = "Skill", y = "Percentage") +
+   theme(axis.text.x = element_text(angle = 45, hjust = 1) ) +
+   scale_y_continuous(labels = scales::percent_format(scale = 1))  # Apply the 
+
+grid.arrange(plot1, plot2, ncol = 2)
+grid.arrange(plot1, plot0, ncol = 2)
+# Summarize the normality test results
+summary(normality_table)
+```
+
+##Conclusion:
+
+For this project, we set out to evaluate "Which are the most valued data science skills?". Utilizing two data sets from Jeff Hales collection on Kaggle, we separated our analysis to this question into two different areas. Software and Skills are the two data sets that Hale scraped from four different job boards (LinkedIn, Indeed, SimplyHired and Monster). After making the proper tidying and cleaning techniques for the raw data, we were able to begin our data visualization analysis. To further add value to this analysis, percentage variables were calculated within each Job Page Category. By doing this, the counts within each job platform variable are easier to describe and visualize. The count analysis shows that machine learning, statistics and analysis are the three most sought-after skills from the four different job boards. Knowing the top three skills is important, but the data presentation with only count data is messy and hard to picture. Therefore, frequency variables were calculated for better visualization among the job boards. Looking at the frequency data there are a few more interesting discoveries. Computer science, communication and mathematics are all highly valued among employers. The software data set has many more variables than the skills dataset, making visualization much more difficult. Removing some of the lower count software would free up some space and make it cleaner, however it would lose some analytical power if I removed it. Python, R and SQL are the top desired software skills across all of the job pages. Spark, Hadoop and Java also pop up as in demand software. The less frequent software represents much more niche uses in the industry or is more suited for computer science purposes. In conclusion, the data reveals that job postings for various keywords on different platforms do not follow a normal distribution. 'Machine learning' and 'analysis' have the highest job postings, while 'data engineering' and 'neural networks' have the lowest. The Shapiro-Wilk normality test indicates significant deviations from normality across all job search platforms (LinkedIn, Indeed, SimplyHired, Monster). The evolution of data scientist skills from 2018 to the present combines continuity and adaptation. Core skills such as Machine Learning, Statistics, and Computer Science have remained steady. Python and SQL have grown in importance. skills like collaboration and innovation are now essential, Deep Learning and NLP skills from 2018 may have integrated into the broader "Machine Learning" category as the field has progressed.
