@@ -1,6 +1,6 @@
 ---
 title: "Project 3 JB Section"
-author: "Jonathan Burns"
+author: "Jonathan Burns & Michael Robinson"
 date: "2023-10-25"
 output: html_document
 ---
