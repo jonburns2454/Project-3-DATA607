@@ -1,0 +1,212 @@
+---
+title: "DATA 607 - Project 3"
+author: "Jonathan Burns, Michael Robinson"
+date: "2023-10-28"
+output:
+  slidy_presentation: default
+  powerpoint_presentation: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(reshape2)
+library(RMySQL)
+library(wordcloud2)
+library(scales)
+library(gridExtra)
+library(plotly)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Question
+
+**The team aimed to answer the question "Which are the most valued data science skills?"**
+
+-   This is an exploration into the question we are looking to answer.
+
+-   As we progress toward a Masters in Data Science, this will hopefully shine some light in classes we should take, or languages we should focus in.
+
+-   Overall, we want to provide insight into what jobs on top end job boards are looking for.
+
+## Data Collection
+
+-   The two data sets we utilized for this project are pulled from Jeff Hale's Kaggle collection. The data sets used are data from four of the most popular job boards in the US.
+-   The data was scraped from LinkedIn, Indeed, SimplyHired and Monster.
+-   One data set featured job data surrounding the count of 'skills' from each job board, while the other one had 'software'.
+-   We liked the idea of using both of these data sets because they provided a more whole analysis, opposed to using one or the other.
+
+## Data Management and Tidying
+
+-   While the data was loaded into a SQL database, we decided to go with raw imports from a csv in GitHub. This was deliberately done to exemplify some skills that we have learned this year in R.
+
+-   To begin, we took the loaded data and checked for missing data in both data frames. Following our NA checks, we removed columns and lose rows to better fit what we actually wanted to analyze.
+
+-   The main reason why we kept this in a csv format was to utilize some regular expression to change our column vectors to numeric and remove some extra fluff that was imported with the CSV.
+
+-   `r as.numeric(gsub("[%\\,]", "", skills.cleaned$LinkedIn` was the main regular expression function we used to clean our data.
+
+-   We did this for the Skills and Software data sets, and then added the variables into a new 'Cleaned' data frame.
+
+-   The last piece we did before pivoting to a long format, was creating percentage columns for each respective skill and software data point. These were calculated as new 'Frequency' variables.
+
+```{r}
+head(softwareDF)
+```
+
+## Exploratory Data Analysis (EDA)
+
+-   To conduct our EDA, both of the cleaned data sets needed to be pivoted into a long format in order to make filtering, mutating and plotting easier.
+
+-   Instead of the traditional `r pivot_longer` function from the dplyr package, we used `r melt` from the reshape package.
+
+-   Our data is correctly formatted and can now be used for plotting and comparative analysis.
+
+## Comparative analysis Skills:
+
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedIn" | variable == "Indeed" | variable == "SimplyHired" | variable == "Monster") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.8) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn" = "coral1", "Indeed" = "firebrick4", "SimplyHired" = "aquamarine4", "Monster" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Skills)")+
+    coord_flip()
+```
+
+## Skills Frequency:
+
+```{r}
+meltedSkills %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+ggplot(aes(x = Keyword, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Keywords", y = "Frequency") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4"))+
+    ggtitle("Keyword Frequency on Major Job Search Platforms (Skills)")+
+    coord_flip()
+```
+
+## Software Count:
+
+```{r}
+meltedSoftware %>% 
+    filter(variable == "LinkedIn.S" | variable == "Indeed.S" | variable == "SimplyHired.S" | variable == "Monster.S") %>% 
+ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedIn.S" = "coral1", "Indeed.S" = "firebrick4", "SimplyHired.S" = "aquamarine4", "Monster.S" = "chartreuse4"))+
+    ggtitle("Keyword Count on Major Job Search Platforms (Software)")+
+    coord_flip()
+```
+
+## Software Frequency:
+
+```{r}
+plot1 <- meltedSoftware %>% 
+    filter(variable == "LinkedInFreq" | variable == "IndeedFreq" | variable == "SimplyHiredFreq" | variable == "MonsterFreq") %>% 
+    ggplot(aes(x = Keyword.S, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    labs(x = "Keywords", y = "Count") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("LinkedInFreq" = "coral1", "IndeedFreq" = "firebrick4", "SimplyHiredFreq" = "aquamarine4", "MonsterFreq" = "chartreuse4")) +
+    ggtitle("Keyword Count on Major Job Search Platforms (Software)") +
+    coord_flip()
+
+# Convert ggplot objects to plotly objects
+interactive_plot1 <- ggplotly(plot1)
+
+interactive_plot1_zoom <- interactive_plot1 %>%
+  layout(xaxis = list(title = "Keywords"), yaxis = list(title = "Count"))
+
+# Make the plot zoom interactive
+interactive_plot1_zoom <- interactive_plot1_zoom %>%
+  config(scrollZoom = TRUE)
+
+interactive_plot1_zoom
+```
+
+## Statistical Analysis:
+
+```{r}
+normality_table <- data.frame(
+  Platform = c("LinkedIn", "Indeed", "SimplyHired", "Monster"),
+  p_value = shapiro_test
+)
+
+plot0 <- ggplot(skillsDF, aes(Keyword, Total)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Job Postings by Keyword 2018",
+       x = "Keyword",
+       y = "Total Job Postings") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+plot0
+```
+
+## Normality Test Results:
+
+```{r}
+ggplot(normality_table, aes(Platform, p_value)) +
+  geom_bar(stat = "identity", fill = "green") +
+  labs(title = "Normality Test Results",
+       x = "Platform",
+       y = "p-value")
+```
+
+## Key Findings:
+
+##### Skills:
+
+-   In conclusion, the data reveals that job postings for various keywords on different platforms do not follow a normal distribution.
+
+-   'Machine learning' and 'analysis' have the highest job postings, while 'data engineering' and 'neural networks' have the lowest.
+
+##### Software:
+
+-   Python, R and SQL are the top desired software skills across all of the job pages.
+
+-   Spark, Hadoop and Java also pop up as in demand software. The less frequent software represents much more niche uses in the industry or is more suited for computer science purposes.
+
+## Next steps:
+
+-   The evolution of data scientist skills from 2018 to the present combines continuity and adaptation.
+-   Core skills such as Machine Learning, Statistics, and Computer Science have remained steady, while Python and SQL have grown in importance.
+-   Skills like collaboration and innovation are now essential, Deep Learning and NLP skills from 2018 may have integrated into the broader "Machine Learning" category as the field has progressed.
+-   As the industry progresses more niche skills and software knowledge become in higher demand.
+
+## Word Clouds:
+
+##### Skills:
+
+```{r}
+top_keywords_skills <- meltedSkills %>% 
+    group_by(Keyword) %>% 
+    summarise(Frequency_LI = sum(as.numeric(value))) %>% 
+    head(15) #adjusting this so all 15 keywords are present 
+
+wordcloud2(top_keywords_skills, size = 0.7,
+           minRotation = -pi/3, maxRotation = pi/3, shuffle = T,
+           shape = 'circle', rotateRatio = 0.3)
+```
+
+##### Software:
+
+```{r}
+top_keywords_software <- meltedSoftware %>% 
+    group_by(Keyword.S) %>% 
+    summarise(Frequency_SF = sum(as.numeric(value))) %>% 
+    head(100) #adjusting this so all 15 keywords are present 
+
+wordcloud2(top_keywords_software, size = 0.8,
+           minRotation = -pi/4, maxRotation = pi/4, shuffle = T,
+           shape = 'circle', rotateRatio = 0.3)
+```
